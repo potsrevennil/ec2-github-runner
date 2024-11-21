@@ -50,15 +50,24 @@ async function startEc2Instance(label, githubRegistrationToken) {
     TagSpecifications: config.tagSpecifications
   };
 
-  try {
-    const result = await ec2.send(new RunInstancesCommand(params));
-    const ec2InstanceId = result.Instances[0].InstanceId;
-    core.info(`AWS EC2 instance ${ec2InstanceId} is started`);
-    return ec2InstanceId;
-  } catch (error) {
-    core.error('AWS EC2 instance starting error');
-    throw error;
+  for(let retryCount = 0; retryCount < 100; retryCount++){
+    try {
+      const result = await ec2.send(new RunInstancesCommand(params));
+      const ec2InstanceId = result.Instances[0].InstanceId;
+      core.info(`AWS EC2 instance ${ec2InstanceId} is started`);
+      return ec2InstanceId;
+    } catch (error) {
+      core.error('AWS EC2 instance starting error');
+      if(error.name == 'VcpuLimitExceeded') {
+        core.error(error);
+        core.error("Retrying in 30 seconds");
+        await new Promise(r => setTimeout(r, 30000));
+      } else {
+        throw error;
+      }
+    }
   }
+  throw new Error("Maximum number of retries exceeded");
 }
 
 async function terminateEc2Instance() {
