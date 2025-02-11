@@ -15,7 +15,8 @@ function buildUserDataScript(githubRegistrationToken, label) {
       'source pre-runner-script.sh',
       'export RUNNER_ALLOW_RUNASROOT=1',
       `./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label} --replace`,
-      './run.sh'
+      './svc.sh install',
+      './svc.sh start'
     ];
   } else {
     return [
@@ -28,7 +29,8 @@ function buildUserDataScript(githubRegistrationToken, label) {
       'tar xzf ./actions-runner-linux-${RUNNER_ARCH}-2.313.0.tar.gz',
       'export RUNNER_ALLOW_RUNASROOT=1',
       `./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label} --replace`,
-      './run.sh'
+      './svc.sh install',
+      './svc.sh start'
     ];
   }
 }
@@ -90,7 +92,7 @@ async function terminateEc2Instance() {
 async function waitForInstanceRunning(ec2InstanceId) {
   const ec2 = new EC2Client();
   try {
-    core.info(`Cheking for instance ${ec2InstanceId} to be up and running`)
+    core.info(`Checking for instance ${ec2InstanceId} to be up and running`)
     await waitUntilInstanceRunning(
       {
         client: ec2,
